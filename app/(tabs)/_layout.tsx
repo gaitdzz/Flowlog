@@ -16,6 +16,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
@@ -26,21 +27,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: '首页',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="home" color={color} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
-          title: 'History',
+          title: '历史',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="calendar" color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: '个人中心',
           tabBarIcon: ({ color }) => <Ionicons size={28} name="person" color={color} />,
         }}
       />

@@ -9,6 +9,7 @@ import { useRouter } from 'expo-router';
 import { tagColor } from '@/src/utils/colors';
 import { parseTags } from '@/src/utils/tags';
 import { MoodDonut } from '@/components/stats/MoodDonut';
+import { ProgressRing } from '@/components/stats/ProgressRing';
 import { WeeklyTrend } from '@/components/stats/WeeklyTrend';
 import { monthHeatmapMetrics, monthlyMoodAndTags } from '@/src/utils/stats';
 
@@ -19,7 +20,8 @@ export default function HistoryScreen() {
   const { 
     heatmapData, loadHeatmap, historyTimelines, loadHistoryTimelines,
     reviewsList, loadReviewsHistory, searchGlobal, searchResults,
-    monthlyTimelines, loadMonthlyTimelines
+    monthlyTimelines, loadMonthlyTimelines,
+    streakCount, weekCompleted, weeklyGoal, monthlyGoal
   } = useFlowLogStore();
   
   const colorScheme = useColorScheme();
@@ -185,7 +187,7 @@ export default function HistoryScreen() {
               <Ionicons name="chevron-back" size={20} color={textColor} />
           </TouchableOpacity>
           <Text style={[styles.monthNavText, { color: textColor }]}>
-              {format(currentDate, 'MMMM yyyy')}
+              {currentDate.getFullYear() + '年' + (currentDate.getMonth() + 1) + '月'}
           </Text>
           <TouchableOpacity onPress={onNext} style={styles.navBtn}>
               <Ionicons name="chevron-forward" size={20} color={textColor} />
@@ -206,12 +208,13 @@ export default function HistoryScreen() {
       days.push(ds);
     }
     const { totalRecords, activeDays, completedDays, median } = monthHeatmapMetrics(heatmapData, heatmapMonthDate);
+    const monthlyCompleted = completedDays;
     const info = [
-      { label: 'Total Records', value: totalRecords },
-      { label: 'Active Days', value: activeDays },
-      { label: 'Completed Reviews', value: completedDays },
-      { label: 'Avg/Active Day', value: activeDays ? Math.round((totalRecords / activeDays) * 10) / 10 : 0 },
-      { label: 'Median/Active Day', value: median },
+      { label: '记录总数', value: totalRecords },
+      { label: '活跃天数', value: activeDays },
+      { label: '完成复盘天数', value: completedDays },
+      { label: '活跃日均记录', value: activeDays ? Math.round((totalRecords / activeDays) * 10) / 10 : 0 },
+      { label: '活跃日中位数', value: median },
     ];
     const moodCounts = monthlyAgg.moodCounts;
     const tagFreq = monthlyAgg.tagFreq;
@@ -220,6 +223,17 @@ export default function HistoryScreen() {
     const pct = (n: number) => moodTotal ? Math.round((n / moodTotal) * 100) : 0;
     return (
       <View style={{ paddingHorizontal: 16 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <View style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#10b981' }}>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>连续 {streakCount}</Text>
+          </View>
+          <View style={{ marginLeft: 6 }}>
+            <ProgressRing size={48} thickness={7} progress={weeklyGoal ? weekCompleted / weeklyGoal : 0} color="#3b82f6" label="周" textColor={textColor} />
+          </View>
+          <View style={{ marginLeft: 4 }}>
+            <ProgressRing size={48} thickness={7} progress={monthlyGoal ? monthlyCompleted / monthlyGoal : 0} color="#8b5cf6" label="月" textColor={textColor} />
+          </View>
+        </View>
         {renderMonthNavigator(heatmapMonthDate, () => handleHeatmapMonthChange('prev'), () => handleHeatmapMonthChange('next'))}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
           {info.map(i => (
@@ -231,7 +245,7 @@ export default function HistoryScreen() {
         </View>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
           <View style={{ flex: 1, padding: 12, borderWidth: 1, borderColor: borderColor, borderRadius: 12 }}>
-            <Text style={{ color: textColor, fontWeight: 'bold', marginBottom: 8 }}>Mood</Text>
+            <Text style={{ color: textColor, fontWeight: 'bold', marginBottom: 8 }}>心情分布</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ alignItems: 'center' }}>
                 <Text style={{ color: textColor }}>🙂</Text>
@@ -271,9 +285,9 @@ export default function HistoryScreen() {
             </View>
           </View>
           <View style={{ flex: 1, padding: 12, borderWidth: 1, borderColor: borderColor, borderRadius: 12 }}>
-            <Text style={{ color: textColor, fontWeight: 'bold', marginBottom: 8 }}>Top Tags</Text>
+            <Text style={{ color: textColor, fontWeight: 'bold', marginBottom: 8 }}>热门标签</Text>
             {topTags.length === 0 ? (
-              <Text style={{ color: subTextColor }}>No tags</Text>
+              <Text style={{ color: subTextColor }}>无标签</Text>
             ) : (
               topTags.map(([tag, cnt]) => {
                 const totalTagUse = Array.from(tagFreq.values()).reduce((a,b)=>a+b,0);
@@ -288,7 +302,7 @@ export default function HistoryScreen() {
           </View>
         </View>
         <View style={{ marginTop: 16 }}>
-          <Text style={{ color: textColor, fontWeight: 'bold', marginBottom: 8 }}>Weekly Totals</Text>
+          <Text style={{ color: textColor, fontWeight: 'bold', marginBottom: 8 }}>每周总计</Text>
           {(() => {
             const weekly: { label: string; sum: number }[] = [];
             let cursor = startOfWeek(new Date(y, heatmapMonthDate.getMonth(), 1));
@@ -347,7 +361,7 @@ export default function HistoryScreen() {
               </View>
             );
           })()}
-          <Text style={{ color: textColor, fontWeight: 'bold', marginTop: 12, marginBottom: 8 }}>Last 14 Days</Text>
+          <Text style={{ color: textColor, fontWeight: 'bold', marginTop: 12, marginBottom: 8 }}>最近14天</Text>
           {(() => {
             const today = new Date();
             const days14: { ds: string; v: number }[] = [];
@@ -368,7 +382,7 @@ export default function HistoryScreen() {
               </View>
             );
           })()}
-          <Text style={{ color: textColor, fontWeight: 'bold', marginTop: 12, marginBottom: 8 }}>Daily Intensity</Text>
+          <Text style={{ color: textColor, fontWeight: 'bold', marginTop: 12, marginBottom: 8 }}>每日强度</Text>
           {days.map(ds => {
             const h = heatmapData[ds];
             const v = h ? h.count || 0 : 0;
@@ -388,7 +402,7 @@ export default function HistoryScreen() {
     <View style={{ flex: 1 }}>
         <View style={{ paddingHorizontal: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <TouchableOpacity style={[styles.filterChip]} onPress={() => { setSelectedMood(null); setSelectedTag(null); }}>
-                <Text style={{ color: textColor }}>Reset Filters</Text>
+                <Text style={{ color: textColor }}>重置筛选</Text>
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', gap: 6 }}>
                 <TouchableOpacity style={[styles.filterChip, selectedMood==='happy' && styles.filterChipActive]} onPress={() => setSelectedMood(selectedMood==='happy'?null:'happy')}>
@@ -434,7 +448,7 @@ export default function HistoryScreen() {
         {/* Selected Day Logs */}
         <View style={[styles.list, { flex: 1, marginTop: 16 }]}>
             <Text style={[styles.sectionTitle, { color: textColor }]}>
-                {selectedLogDate ? format(selectedLogDate, 'EEEE, MMMM d, yyyy') : 'Select a day to view logs'}
+                {selectedLogDate ? (selectedLogDate.getFullYear() + '年' + (selectedLogDate.getMonth()+1) + '月' + selectedLogDate.getDate() + '日') : '选择某天查看记录'}
             </Text>
             
             {selectedLogDate && (
@@ -444,7 +458,7 @@ export default function HistoryScreen() {
                     contentContainerStyle={{ paddingBottom: 20 }}
                     ListEmptyComponent={
                         <Text style={{ color: subTextColor, marginTop: 12 }}>
-                            No logs found for this day.
+                            当天无记录
                         </Text>
                     }
                     renderItem={({ item, index }) => {
@@ -514,7 +528,7 @@ export default function HistoryScreen() {
             ListEmptyComponent={
                 <View style={styles.emptyState}>
                     <Ionicons name="document-text-outline" size={48} color={subTextColor} />
-                    <Text style={{ color: subTextColor, marginTop: 12 }}>No reviews for this month</Text>
+                    <Text style={{ color: subTextColor, marginTop: 12 }}>本月暂无复盘</Text>
                 </View>
             }
             renderItem={({ item }) => (
@@ -594,7 +608,7 @@ export default function HistoryScreen() {
                   ))}
                 </ScrollView>
               </View>
-              <Text style={[styles.sectionTitle, { color: textColor }]}>Timelines ({searchResults.timelines.length})</Text>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>时间线（{searchResults.timelines.length}）</Text>
               {filteredTimelines.map((item: any) => (
                   <View key={`t-${item.id}`} style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
                       <Text style={{ color: subTextColor, fontSize: 12, marginBottom: 4 }}>
@@ -626,7 +640,7 @@ export default function HistoryScreen() {
                   </View>
               ))}
 
-              <Text style={[styles.sectionTitle, { color: textColor, marginTop: 24 }]}>Reviews ({searchResults.reviews.length})</Text>
+              <Text style={[styles.sectionTitle, { color: textColor, marginTop: 24 }]}>复盘（{searchResults.reviews.length}）</Text>
               {searchResults.reviews.map((item: any) => (
                   <TouchableOpacity 
                     key={`r-${item.date}`}
@@ -654,7 +668,7 @@ export default function HistoryScreen() {
         <View style={[styles.searchContainer, { backgroundColor: inputBg }]}>
             <Ionicons name="search" size={20} color={subTextColor} style={{ marginRight: 8 }} />
             <TextInput 
-                placeholder="Search history..." 
+                placeholder="搜索历史..." 
                 placeholderTextColor={subTextColor}
                 style={{ flex: 1, color: textColor, height: '100%' }}
                 value={searchQuery}
@@ -674,19 +688,19 @@ export default function HistoryScreen() {
                     style={[styles.segmentBtn, activeTab === 'Heatmap' && { backgroundColor: isDark ? '#374151' : 'white', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2 }]}
                     onPress={() => setActiveTab('Heatmap')}
                 >
-                    <Text style={{ color: textColor, fontWeight: activeTab === 'Heatmap' ? 'bold' : 'normal' }}>Heatmap</Text>
+                    <Text style={{ color: textColor, fontWeight: activeTab === 'Heatmap' ? 'bold' : 'normal' }}>热力图</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={[styles.segmentBtn, activeTab === 'Reviews' && { backgroundColor: isDark ? '#374151' : 'white', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2 }]}
                     onPress={() => setActiveTab('Reviews')}
                 >
-                    <Text style={{ color: textColor, fontWeight: activeTab === 'Reviews' ? 'bold' : 'normal' }}>Reviews</Text>
+                    <Text style={{ color: textColor, fontWeight: activeTab === 'Reviews' ? 'bold' : 'normal' }}>复盘</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
                     style={[styles.segmentBtn, activeTab === 'Stats' && { backgroundColor: isDark ? '#374151' : 'white', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2 }]}
                     onPress={() => setActiveTab('Stats')}
                 >
-                    <Text style={{ color: textColor, fontWeight: activeTab === 'Stats' ? 'bold' : 'normal' }}>Stats</Text>
+                    <Text style={{ color: textColor, fontWeight: activeTab === 'Stats' ? 'bold' : 'normal' }}>统计</Text>
                 </TouchableOpacity>
             </View>
         )}

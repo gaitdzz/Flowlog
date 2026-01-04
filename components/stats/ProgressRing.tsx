@@ -10,6 +10,7 @@ export function ProgressRing({
   trackColor = '#e5e7eb',
   label,
   textColor = '#111827',
+  showPercentage = false,
 }: {
   size?: number;
   thickness?: number;
@@ -18,6 +19,7 @@ export function ProgressRing({
   trackColor?: string;
   label?: string;
   textColor?: string;
+  showPercentage?: boolean;
 }) {
   const radius = (size - thickness) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -42,9 +44,9 @@ export function ProgressRing({
           transform={`rotate(-90 ${cx} ${cy})`}
         />
       </Svg>
-      <View style={{ position: 'absolute', alignItems: 'center' }}>
-        {label ? <Text style={{ color: textColor, fontSize: 12 }}>{label}</Text> : null}
-        <Text style={{ color: textColor, fontWeight: 'bold' }}>{Math.round(clamped * 100)}%</Text>
+      <View style={{ position: 'absolute', width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+        {label ? <Text style={{ color: textColor, fontSize: Math.max(10, Math.round(size * 0.26)) }}>{label}</Text> : null}
+        {showPercentage ? <Text style={{ color: textColor, fontWeight: 'bold' }}>{Math.round(clamped * 100)}%</Text> : null}
       </View>
     </View>
   );

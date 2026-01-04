@@ -145,7 +145,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       get().loadStreak();
       get().checkStreakAchievements();
     } catch (e) {
-      set({ error: 'Failed to initialize database' });
+      set({ error: '初始化数据库失败' });
     }
   },
 
@@ -164,7 +164,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         set({ gapAlert: { lastRecord, diffMinutes } });
       }
     } catch (e) {
-      console.error('Failed to check gap:', e);
+      console.error('检查间隔失败:', e);
     }
   },
 
@@ -176,7 +176,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const records = getTimelinesByDate(date) as Timeline[];
       set({ timelines: records, isLoading: false });
     } catch (e) {
-      set({ error: 'Failed to load timelines', isLoading: false });
+      set({ error: '加载时间线失败', isLoading: false });
     }
   },
 
@@ -186,7 +186,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const records = getTimelinesByDate(date) as Timeline[];
       set({ historyTimelines: records, isLoading: false });
     } catch (e) {
-      set({ error: 'Failed to load history timelines', isLoading: false });
+      set({ error: '加载历史时间线失败', isLoading: false });
     }
   },
   loadMonthlyTimelines: (startDate: string, endDate: string) => {
@@ -195,7 +195,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const records = getTimelinesByDateRange(startDate, endDate) as Timeline[];
       set({ monthlyTimelines: records, isLoading: false });
     } catch (e) {
-      set({ error: 'Failed to load monthly timelines', isLoading: false });
+      set({ error: '加载月度时间线失败', isLoading: false });
     }
   },
   loadFavoriteTags: () => {
@@ -204,7 +204,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const tags = rows.map(r => ({ tag: r.tag as string, color: r.color as string | null }));
       set({ favoriteTags: tags });
     } catch (e) {
-      set({ error: 'Failed to load favorite tags' });
+      set({ error: '加载收藏标签失败' });
     }
   },
   addFavoriteTag: (tag: string) => {
@@ -219,7 +219,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       get().loadFavoriteTags();
       return true;
     } catch (e) {
-      set({ error: 'Failed to add favorite tag' });
+      set({ error: '添加收藏标签失败' });
       return false;
     }
   },
@@ -228,7 +228,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       removeFavoriteTagRow(tag);
       get().loadFavoriteTags();
     } catch (e) {
-      set({ error: 'Failed to remove favorite tag' });
+      set({ error: '移除收藏标签失败' });
     }
   },
   updateFavoriteTagColor: (tag: string, color: string | null) => {
@@ -236,7 +236,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       updateFavoriteTagColorRow(tag, color);
       get().loadFavoriteTags();
     } catch (e) {
-      set({ error: 'Failed to update favorite tag color' });
+      set({ error: '更新收藏标签颜色失败' });
     }
   },
   loadWeeklyGoal: () => {
@@ -245,7 +245,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const n = val ? parseInt(val, 10) : 7;
       set({ weeklyGoal: isNaN(n) ? 7 : n });
     } catch (e) {
-      set({ error: 'Failed to load weekly goal' });
+      set({ error: '加载周目标失败' });
     }
   },
   setWeeklyGoal: (n: number) => {
@@ -254,7 +254,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       setSetting('weekly_goal', String(v));
       set({ weeklyGoal: v });
     } catch (e) {
-      set({ error: 'Failed to set weekly goal' });
+      set({ error: '设置周目标失败' });
     }
   },
   loadMonthlyGoal: () => {
@@ -263,7 +263,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const n = val ? parseInt(val, 10) : 20;
       set({ monthlyGoal: isNaN(n) ? 20 : n });
     } catch (e) {
-      set({ error: 'Failed to load monthly goal' });
+      set({ error: '加载月目标失败' });
     }
   },
   setMonthlyGoal: (n: number) => {
@@ -272,7 +272,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       setSetting('monthly_goal', String(v));
       set({ monthlyGoal: v });
     } catch (e) {
-      set({ error: 'Failed to set monthly goal' });
+      set({ error: '设置月目标失败' });
     }
   },
 
@@ -309,7 +309,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       get().loadHeatmap(thirtyDaysAgo.toISOString().split('T')[0]);
     } catch (e) {
-      set({ error: 'Failed to add record' });
+      set({ error: '添加记录失败' });
     }
   },
 
@@ -327,7 +327,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       set({ timelines });
       
     } catch (e) {
-      set({ error: 'Failed to update record end time' });
+      set({ error: '更新记录结束时间失败' });
     }
   },
 
@@ -344,7 +344,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
       get().loadHeatmap(thirtyDaysAgo.toISOString().split('T')[0]);
     } catch (e) {
-      set({ error: 'Failed to save review' });
+      set({ error: '保存复盘失败' });
     }
   },
 
@@ -353,7 +353,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const review = getDailyReview(date) as DailyReview;
       set({ currentReview: review || null });
     } catch (e) {
-      set({ error: 'Failed to load review' });
+      set({ error: '加载复盘失败' });
     }
   },
 
@@ -378,7 +378,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         heatmapData: { ...state.heatmapData, ...data } 
       }));
     } catch (e) {
-      set({ error: 'Failed to load heatmap stats' });
+      set({ error: '加载热力图统计失败' });
     }
   },
 
@@ -388,7 +388,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const reviews = getReviewsByDateRange(startDate, endDate) as DailyReview[];
       set({ reviewsList: reviews, isLoading: false });
     } catch (e) {
-      set({ error: 'Failed to load reviews history', isLoading: false });
+      set({ error: '加载复盘历史失败', isLoading: false });
     }
   },
 
@@ -402,7 +402,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const results = searchRecords(keyword);
       set({ searchResults: results, isLoading: false });
     } catch (e) {
-      set({ error: 'Failed to search records', isLoading: false });
+      set({ error: '搜索记录失败', isLoading: false });
     }
   },
   loadStreak: () => {
@@ -451,7 +451,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       }
       set({ streakCount: streak, bestStreak: best });
     } catch (e) {
-      set({ error: 'Failed to compute streak' });
+      set({ error: '计算连续天数失败' });
     }
   },
   loadWeekProgress: () => {
@@ -467,10 +467,10 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const goal = get().weeklyGoal;
       const ds = formatDate(start) + '_weekly';
       if (count >= goal) {
-        get().addAchievementEntry('weekly_goal', 'Weekly Goal Met', ds);
+        get().addAchievementEntry('weekly_goal', '达成周目标', ds);
       }
     } catch (e) {
-      set({ error: 'Failed to compute week progress' });
+      set({ error: '计算周进度失败' });
     }
   },
 
@@ -499,7 +499,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         await Sharing.shareAsync(fileUri);
       }
     } catch (e) {
-      set({ error: 'Failed to export data' });
+      set({ error: '导出数据失败' });
     }
   },
   exportMarkdownToFile: async () => {
@@ -520,7 +520,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         byDate[d].review = r;
       });
       const dates = Object.keys(byDate).sort().reverse();
-      let md = `# FlowLog Export\n\n`;
+      let md = `# 流刻导出\n\n`;
       dates.forEach(d => {
         md += `## ${d}\n\n`;
         const section = byDate[d];
@@ -539,7 +539,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
           md += `- ${hhmm}${endStr?`-${endStr}`:''}${mood} ${t.content}${tagsStr}\n`;
         });
         if (section.review) {
-          md += `\n### Review\n\n`;
+          md += `\n### 复盘\n\n`;
           md += `${section.review.content || ''}\n\n`;
         }
       });
@@ -623,11 +623,11 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         groups[a.type].push(a);
       });
       const order = ['streak', 'weekly_goal', 'monthly_goal'];
-      let md = `# FlowLog Achievements\n\nGenerated: ${new Date().toISOString()}\n\n`;
+      let md = `# 流刻成就\n\n生成时间：${new Date().toISOString()}\n\n`;
       order.forEach(t => {
         const arr = groups[t] || [];
         if (!arr.length) return;
-        const title = t === 'streak' ? 'Streak' : t === 'weekly_goal' ? 'Weekly Goal' : 'Monthly Goal';
+        const title = t === 'streak' ? '连续' : t === 'weekly_goal' ? '周目标' : '月目标';
         md += `## ${title}\n`;
         arr.sort((a,b) => a.date.localeCompare(b.date)).forEach(a => {
           md += `- ${a.date}: ${a.label}\n`;
@@ -651,7 +651,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         await Sharing.shareAsync(fileUri);
       }
     } catch (e) {
-      set({ error: 'Failed to export achievements markdown' });
+      set({ error: '导出成就 Markdown 失败' });
     }
   },
   exportAchievementsSummaryMarkdownToFile: async (items?: { type: string; label: string; date: string }[]) => {
@@ -670,7 +670,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const formatter = (d: Date) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
       const min = dates.length ? formatter(new Date(Math.min(...dates.map(d => d.getTime())))) : 'N/A';
       const max = dates.length ? formatter(new Date(Math.max(...dates.map(d => d.getTime())))) : 'N/A';
-      let md = `# Achievements Summary\n\nTotal: ${total}\n\n- Streak: ${typeCount['streak'] || 0}\n- Weekly Goal: ${typeCount['weekly_goal'] || 0}\n- Monthly Goal: ${typeCount['monthly_goal'] || 0}\n\nRange: ${min} ~ ${max}\n`;
+      let md = `# 成就摘要\n\n总计：${total}\n\n- 连续：${typeCount['streak'] || 0}\n- 周目标：${typeCount['weekly_goal'] || 0}\n- 月目标：${typeCount['monthly_goal'] || 0}\n\n范围：${min} ~ ${max}\n`;
       const fileName = `flowlog_achievements_summary_${new Date().toISOString().split('T')[0]}.md`;
       if (Platform.OS === 'web') {
         const blob = new Blob([md], { type: 'text/markdown' });
@@ -688,7 +688,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         await Sharing.shareAsync(fileUri);
       }
     } catch (e) {
-      set({ error: 'Failed to export achievements summary' });
+      set({ error: '导出成就摘要失败' });
     }
   },
   loadAchievementsHistory: () => {
@@ -700,7 +700,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       }
       set({ achievementsHistory: arr });
     } catch (e) {
-      set({ error: 'Failed to load achievements history' });
+      set({ error: '加载成就历史失败' });
     }
   },
   addAchievementEntry: (type: string, label: string, date: string) => {
@@ -712,7 +712,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       setSetting('achievements_history', JSON.stringify(next));
       set({ achievementsHistory: next });
     } catch (e) {
-      set({ error: 'Failed to add achievement' });
+      set({ error: '添加成就失败' });
     }
   },
   checkMonthlyGoal: () => {
@@ -725,7 +725,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const goal = get().monthlyGoal;
       const ds = formatDate(start) + '_monthly';
       if (completed >= goal) {
-        get().addAchievementEntry('monthly_goal', 'Monthly Goal Met', ds);
+        get().addAchievementEntry('monthly_goal', '达成月目标', ds);
       }
     } catch (e) {
       set({ error: 'Failed to check monthly goal' });
@@ -735,9 +735,9 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
     try {
       const best = get().bestStreak;
       const today = formatDate(new Date());
-      if (best >= 7) get().addAchievementEntry('streak', '7-Day Streak', today);
-      if (best >= 30) get().addAchievementEntry('streak', '30-Day Streak', today);
-      if (best >= 100) get().addAchievementEntry('streak', '100-Day Streak', today);
+      if (best >= 7) get().addAchievementEntry('streak', '7天连续', today);
+      if (best >= 30) get().addAchievementEntry('streak', '30天连续', today);
+      if (best >= 100) get().addAchievementEntry('streak', '100天连续', today);
     } catch (e) {
       set({ error: 'Failed to check streak achievements' });
     }
@@ -746,14 +746,14 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
 
   scheduleNotification: async (intervalMinutes: number) => {
     if (Platform.OS === 'web') {
-      console.log('Notifications not fully supported on web MVP');
+      console.log('Web 端通知在 MVP 中不完全支持');
       return;
     }
 
     try {
       const { status } = await Notifications.requestPermissionsAsync();
       if (status !== 'granted') {
-        alert('Permission for notifications was not granted');
+        alert('未授予通知权限');
         return;
       }
 
@@ -762,8 +762,8 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       if (intervalMinutes > 0) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: "Time Check",
-            body: "What are you doing right now?",
+            title: "时间提醒",
+            body: "此刻在做什么？",
           },
           trigger: {
             seconds: intervalMinutes * 60,
@@ -772,7 +772,7 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
         });
       }
     } catch (e) {
-      set({ error: 'Failed to schedule notification' });
+      set({ error: '计划通知失败' });
     }
   }
 }));

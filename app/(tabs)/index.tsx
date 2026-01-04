@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity, View, Text, TextInput, useColorScheme, Modal, Dimensions } from 'react-native';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { StyleSheet, FlatList, KeyboardAvoidingView, Platform, TouchableOpacity, View, Text, TextInput, useColorScheme, Modal, Dimensions, ScrollView, Keyboard, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { format, startOfMonth } from 'date-fns';
 import { useFlowLogStore } from '@/src/store';
@@ -10,6 +10,7 @@ import { TimePicker } from '@/components/TimePicker';
 import { tagColor } from '@/src/utils/colors';
 import { parseTags } from '@/src/utils/tags';
 import { ProgressRing } from '@/components/stats/ProgressRing';
+import { WeeklyTrend } from '@/components/stats/WeeklyTrend';
 import { Chip } from '@/src/ui/Chip';
 import { Button } from '@/src/ui/Button';
 
@@ -28,9 +29,12 @@ export default function HomeScreen() {
   }, []);
 
   // Time Picker States
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
-  const [mood, setMood] = useState<string | undefined>(undefined);
+  const [lastMood, setLastMood] = useState<string | undefined>(undefined);
+  const [postMood, setPostMood] = useState<string | undefined>(undefined);
+  const [postEndTime, setPostEndTime] = useState<Date | undefined>(undefined);
+  const [rememberMood, setRememberMood] = useState(false);
+  const [showPostSendModal, setShowPostSendModal] = useState(false);
+  const [pendingContent, setPendingContent] = useState<string>('');
   const [activeTagIndex, setActiveTagIndex] = useState(0);
 
   // Gap Alert Modal State
@@ -56,8 +60,20 @@ export default function HomeScreen() {
   const borderColor = isDark ? '#374151' : '#e5e7eb';
   const [monthlyCompleted, setMonthlyCompleted] = useState(0);
   const screenWidth = Dimensions.get('window').width;
-  const ringSize = screenWidth < 360 ? 32 : 40;
-  const ringThickness = screenWidth < 360 ? 5 : 6;
+  const ringSize = screenWidth < 480 ? 28 : 34;
+  const ringThickness = screenWidth < 480 ? 4 : 5;
+  const sevenTrend = useMemo(() => {
+    const today = new Date(currentTime);
+    const arr: number[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const ds = format(d, 'yyyy-MM-dd');
+      const h = (heatmapData as any)[ds];
+      arr.push(h ? h.count || 0 : 0);
+    }
+    return arr;
+  }, [heatmapData, currentTime]);
   const getTagFrequencyEntries = useCallback(() => {
     const freq = new Map<string, number>();
     monthlyTimelines.forEach((t: any) => {
@@ -122,46 +138,56 @@ export default function HomeScreen() {
 
   const isReviewComplete = (currentReview?.word_count || 0) >= 500;
 
+  const StreakBadge = ({ count }: { count: number }) => {
+    const active = count > 0;
+    const border = active ? '#f59e0b' : (isDark ? '#6b7280' : '#d1d5db');
+    const textC = active ? '#f59e0b' : (isDark ? '#9ca3af' : '#6b7280');
+    const flameC = active ? '#f59e0b' : (isDark ? '#9ca3af' : '#9ca3af');
+    return (
+      <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: border, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+        <Text style={{ color: textC, fontWeight: 'bold', fontSize: 12 }}>{count}</Text>
+        <Ionicons name="flame" size={12} color={flameC} style={{ position: 'absolute', right: -2, top: -2 }} />
+      </View>
+    );
+  };
   const handleSend = () => {
     if (!inputText.trim()) return;
-    
-    // Always use current system time as start time
+    Keyboard.dismiss();
+    setPendingContent(inputText);
+    setPostMood(lastMood);
+    setPostEndTime(undefined);
+    setRememberMood(false);
+    setShowPostSendModal(true);
+  };
+
+  const onConfirmOnlyStart = () => {
     const now = new Date();
-    // But keep the selected date (user might be viewing a different day?)
-    // Actually, PRD says "auto select current time". If user is on a past day, adding a record "now" implies it's for today.
-    // However, if user navigated to yesterday, they might want to backfill.
-    // The prompt says "Start time is based on current system time and cannot be adjusted".
-    // This strongly implies we should use `new Date()` for the record timestamp.
-    
-    const finalDate = new Date(); // Use system time
-
-    let finalEndDate: Date | undefined = undefined;
-    if (endDate) {
-        // If end date is set, combine it with today's date
-        finalEndDate = new Date();
-        finalEndDate.setHours(endDate.getHours());
-        finalEndDate.setMinutes(endDate.getMinutes());
-        finalEndDate.setSeconds(endDate.getSeconds());
-    }
-
-    const tags = Array.from(new Set((inputText.match(/#([\\w-]+)/g) || []).map(t => t.replace('#',''))));
-    addRecord(inputText, finalDate, finalEndDate, mood, tags);
+    const tags = Array.from(new Set((pendingContent.match(/#([\w-]+)/g) || []).map(t => t.replace('#',''))));
+    addRecord(pendingContent, now, undefined, undefined, tags);
+    setShowPostSendModal(false);
     setInputText('');
-    setMood(undefined);
-    
-    // Reset end date
-    setEndDate(undefined);
-    
+    if (rememberMood && postMood) setLastMood(postMood);
     setTimeout(() => {
       flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
     }, 100);
   };
-
-  const onEndTimeChange = (event: any, selected: Date | undefined) => {
-    setShowEndDatePicker(false);
-    if (selected) {
-      setEndDate(selected);
+  const onConfirmWithExtras = () => {
+    const now = new Date();
+    let endTimeStr: Date | undefined = undefined;
+    if (postEndTime) {
+      endTimeStr = new Date();
+      endTimeStr.setHours(postEndTime.getHours());
+      endTimeStr.setMinutes(postEndTime.getMinutes());
+      endTimeStr.setSeconds(postEndTime.getSeconds());
     }
+    const tags = Array.from(new Set((pendingContent.match(/#([\w-]+)/g) || []).map(t => t.replace('#',''))));
+    addRecord(pendingContent, now, endTimeStr, postMood, tags);
+    setShowPostSendModal(false);
+    setInputText('');
+    if (rememberMood && postMood) setLastMood(postMood);
+    setTimeout(() => {
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, 100);
   };
 
   const handleGapConfirm = () => {
@@ -227,29 +253,33 @@ export default function HomeScreen() {
       <View style={{ flex: 1 }}>
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: borderColor }]}>
-          <View>
+          <View style={{ minWidth: 110 }}>
             <Text style={[styles.headerTitle, { color: textColor, fontSize: 18 }]}>
-              {format(currentTime, 'MMM d')}
+              {(currentTime.getMonth() + 1) + '月' + currentTime.getDate() + '日'}
             </Text>
             <Text style={[styles.headerSubtitle, { color: timeColor }]}>
               {format(currentTime, 'HH:mm')}
             </Text>
           </View>
-          
-          <Text style={{ fontSize: 20, fontWeight: 'bold', color: textColor }}>
-            FlowLog
-          </Text>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Chip isDark={isDark} selected label={`Streak ${streakCount}`} />
-            <Chip isDark={isDark} label={`Week ${weekCompleted}/${weeklyGoal}`} color="#3b82f6" />
-            <Chip isDark={isDark} label={`Month ${monthlyCompleted}/${monthlyGoal}`} color="#8b5cf6" />
-            <Chip isDark={isDark} label={`Best ${bestStreak}`} color="#f59e0b" />
-            <View style={{ marginLeft: 6 }}>
-              <ProgressRing size={ringSize} thickness={ringThickness} progress={weeklyGoal ? weekCompleted / weeklyGoal : 0} color="#3b82f6" label="W" textColor={textColor} />
+          <View style={{ flex: 2, alignItems: 'center' }}>
+            <View style={{ paddingHorizontal: 14, paddingVertical: 6, borderRadius: 18, backgroundColor: isDark ? '#111827' : '#f4f5ff', borderWidth: 1, borderColor: isDark ? '#334155' : '#e0e7ff', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6 }}>
+              <Text style={{ fontSize: 20, fontWeight: 'bold', color: textColor }}>
+                流刻
+              </Text>
             </View>
-            <View style={{ marginLeft: 2 }}>
-              <ProgressRing size={ringSize} thickness={ringThickness} progress={monthlyGoal ? monthlyCompleted / monthlyGoal : 0} color="#8b5cf6" label="M" textColor={textColor} />
+            <View style={{ marginTop: 4 }}>
+              <WeeklyTrend data={sevenTrend} width={120} height={20} />
+            </View>
+          </View>
+
+          <View style={{ flexShrink: 0, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <StreakBadge count={streakCount} />
+            <View style={{ marginLeft: 4 }}>
+              <ProgressRing size={ringSize} thickness={ringThickness} progress={weeklyGoal ? weekCompleted / weeklyGoal : 0} color="#3b82f6" label="周" textColor={textColor} />
+            </View>
+            <View style={{ marginLeft: 2, marginRight: 8 }}>
+              <ProgressRing size={ringSize} thickness={ringThickness} progress={monthlyGoal ? monthlyCompleted / monthlyGoal : 0} color="#8b5cf6" label="月" textColor={textColor} />
             </View>
           </View>
         </View>
@@ -273,7 +303,7 @@ export default function HomeScreen() {
                     <View style={styles.warningContent}>
                       <Ionicons name="alert-circle" size={20} color={warningText} />
                       <Text style={[styles.warningText, { color: warningText }]}>
-                        Daily review incomplete (500 words)
+                        今日复盘未完成（500字）
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={warningText} />
@@ -305,8 +335,8 @@ export default function HomeScreen() {
         >
           <View style={styles.inputContainer}>
             {favoriteTags.length > 0 && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
-                {favoriteTags.slice(0,8).map(ft => (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginBottom: 6 }}>
+                {favoriteTags.slice(0,12).map(ft => (
                   <TouchableOpacity key={ft.tag} onPress={() => {
                     const base = inputText.trim();
                     const insert = base.length ? base + ' #' + ft.tag : '#' + ft.tag;
@@ -315,25 +345,13 @@ export default function HomeScreen() {
                     <Chip isDark={isDark} label={`#${ft.tag}`} color={ft.color || tagColor(ft.tag, isDark)} />
                   </TouchableOpacity>
                 ))}
-              </View>
+              </ScrollView>
             )}
             <View style={[styles.inputField, { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}>
-               <Button isDark={isDark} title={endDate ? format(endDate, 'HH:mm') : 'End'} icon="stop-circle-outline" variant="ghost" onPress={() => setShowEndDatePicker(true)} />
-              <View style={styles.moodRow}>
-                <TouchableOpacity onPress={() => setMood('happy')}>
-                  <Chip isDark={isDark} label="🙂" selected={mood==='happy'} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setMood('neutral')}>
-                  <Chip isDark={isDark} label="😐" selected={mood==='neutral'} />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => setMood('sad')}>
-                  <Chip isDark={isDark} label="🙁" selected={mood==='sad'} />
-                </TouchableOpacity>
-              </View>
 
               <TextInput
                 style={[styles.textInput, { color: textColor }]}
-                placeholder="What are you doing now?"
+                placeholder="此刻在做什么？"
                 placeholderTextColor="#9ca3af"
                 value={inputText}
                 onChangeText={setInputText}
@@ -371,7 +389,7 @@ export default function HomeScreen() {
                       const base = inputText.replace(/#([\w-]*)$/, `#${tag}`);
                       setInputText(base.endsWith(' ') ? base : base + ' ');
                     }}>
-                      <Chip isDark={isDark} label={`#${tag}`} count={count as any} selected={idx === activeTagIndex} />
+              <Chip isDark={isDark} label={`#${tag}`} count={count as any} selected={idx === activeTagIndex} />
                     </TouchableOpacity>
                   ))}
                   <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -389,31 +407,47 @@ export default function HomeScreen() {
                 </View>
               );
             })()}
-            <Button isDark={isDark} title="Send" icon="arrow-up" variant="success" onPress={handleSend} disabled={!inputText.trim()} style={{ alignSelf: 'flex-end' }} />
+            <Button isDark={isDark} title="发送" icon="arrow-up" variant="success" onPress={handleSend} disabled={!inputText.trim()} style={{ alignSelf: 'flex-end' }} />
           </View>
           
-          {/* Modal Wrapper for End Time Picker to ensure it can be closed */}
           <Modal
-            visible={showEndDatePicker}
-            transparent={true}
+            visible={showPostSendModal}
+            transparent
             animationType="slide"
-            onRequestClose={() => setShowEndDatePicker(false)}
+            onRequestClose={() => setShowPostSendModal(false)}
           >
-             <View style={styles.modalOverlay}>
-                <View style={[styles.modalContent, { backgroundColor: isDark ? '#1f2937' : 'white', width: '90%' }]}>
-                   <Text style={[styles.modalTitle, { color: textColor }]}>Select End Time</Text>
-                   <TimePicker
-                      value={endDate || new Date()}
-                      onChange={onEndTimeChange}
-                   />
-                   <TouchableOpacity 
-                      style={[styles.modalConfirmButton, { backgroundColor: '#ef4444', marginTop: 12 }]}
-                      onPress={() => setShowEndDatePicker(false)}
-                   >
-                      <Text style={{ color: 'white', fontWeight: 'bold' }}>Cancel</Text>
-                   </TouchableOpacity>
+            <View style={styles.modalOverlay}>
+              <View style={[styles.modalContent, { backgroundColor: isDark ? '#1f2937' : 'white', width: '90%' }]}>
+                <Text style={[styles.modalTitle, { color: textColor }]}>补充信息</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <TouchableOpacity onPress={() => setPostMood('happy')}>
+                    <Chip isDark={isDark} label="🙂" selected={postMood==='happy'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setPostMood('neutral')}>
+                    <Chip isDark={isDark} label="😐" selected={postMood==='neutral'} />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setPostMood('sad')}>
+                    <Chip isDark={isDark} label="🙁" selected={postMood==='sad'} />
+                  </TouchableOpacity>
                 </View>
-             </View>
+                <Text style={{ color: timeColor, marginBottom: 6 }}>结束时间（可选）</Text>
+                <TimePicker
+                  value={postEndTime || new Date()}
+                  onChange={(e, d) => {
+                    if (d) setPostEndTime(d);
+                  }}
+                />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
+                  <Switch value={rememberMood} onValueChange={setRememberMood} />
+                  <Text style={{ color: textColor }}>记住心情</Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+                  <Button isDark={isDark} title="仅保存开始时间" icon="checkmark-circle" variant="success" onPress={onConfirmOnlyStart} />
+                  <Button isDark={isDark} title="保存补充信息" icon="save" variant="secondary" onPress={onConfirmWithExtras} />
+                  <Button isDark={isDark} title="取消" icon="close-circle" variant="ghost" onPress={() => setShowPostSendModal(false)} />
+                </View>
+              </View>
+            </View>
           </Modal>
 
         </KeyboardAvoidingView>
@@ -427,16 +461,16 @@ export default function HomeScreen() {
             <View style={styles.modalOverlay}>
                 <View style={[styles.modalContent, { backgroundColor: isDark ? '#1f2937' : 'white' }]}>
                     <Text style={[styles.modalTitle, { color: textColor }]}>
-                        Long Break Detected
+                        检测到较长间隔
                     </Text>
                     <Text style={[styles.modalText, { color: timeColor }]}>
-                        It's been {gapAlert?.diffMinutes ? Math.floor(gapAlert.diffMinutes / 60) : 0} hours since your last record:
+                        距上次记录已过去 {gapAlert?.diffMinutes ? Math.floor(gapAlert.diffMinutes / 60) : 0} 小时：
                     </Text>
                     <Text style={[styles.modalRecord, { color: textColor }]}>
                         "{gapAlert?.lastRecord.content}"
                     </Text>
                     <Text style={[styles.modalText, { color: timeColor }]}>
-                        Please confirm when this activity ended:
+                        请确认该活动的结束时间：
                     </Text>
                     
                     <TouchableOpacity 
@@ -467,7 +501,7 @@ export default function HomeScreen() {
                                         style={[styles.modalConfirmButton, { backgroundColor: '#10b981', marginTop: 12 }]}
                                         onPress={() => setShowGapTimePicker(false)}
                                     >
-                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Done</Text>
+                                        <Text style={{ color: 'white', fontWeight: 'bold' }}>完成</Text>
                                     </TouchableOpacity>
                                 </View>
                             </View>
@@ -478,7 +512,7 @@ export default function HomeScreen() {
                         style={[styles.modalConfirmButton, { backgroundColor: '#10b981' }]}
                         onPress={handleGapConfirm}
                     >
-                        <Text style={{ color: 'white', fontWeight: 'bold' }}>Confirm End Time</Text>
+                        <Text style={{ color: 'white', fontWeight: 'bold' }}>确认结束时间</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -498,7 +532,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
   },
   headerTitle: {
@@ -514,7 +548,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconButton: {
-    padding: 4,
+    padding: 12,
   },
   warningBanner: {
     padding: 12,
