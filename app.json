@@ -3,6 +3,7 @@
     "name": "FlowLog",
     "slug": "FlowLog",
     "version": "1.0.0",
+    "owner": "gaitdzz",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "flowlog",
@@ -12,6 +13,8 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.gaitdzz.flowlog",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -38,7 +41,34 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-sqlite"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a464bf0f-660c-459c-bfbb-8df44bd70825"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
+        }
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,
