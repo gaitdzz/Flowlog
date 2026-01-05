@@ -19,3 +19,4 @@
 ## 构建与调试建议
 - app.json 已设置 android.softwareKeyboardLayoutMode 为 pan
 - 如需切换为 resize，请对首页与 Tabs 进行回归测试
+- CI 构建：确保 GitHub Actions 已配置 EXPO_TOKEN（Expo 账号令牌）
