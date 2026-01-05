@@ -415,7 +415,12 @@ export const useFlowLogStore = create<FlowLogState>((set, get) => ({
       const map = new Map<string, DailyReview>();
       reviews.forEach(r => map.set(r.date, r));
       let streak = 0;
-      const cursor = new Date(today);
+      let cursor = new Date(today);
+      const todayStr = formatDate(today);
+      const todayReview = map.get(todayStr);
+      if (!(todayReview && todayReview.is_completed)) {
+        cursor.setDate(cursor.getDate() - 1); // 以昨天为起点计算连续
+      }
       while (true) {
         const ds = formatDate(cursor);
         const r = map.get(ds);

@@ -32,6 +32,7 @@ export default function HomeScreen() {
   const [lastMood, setLastMood] = useState<string | undefined>(undefined);
   const [postMood, setPostMood] = useState<string | undefined>(undefined);
   const [postEndTime, setPostEndTime] = useState<Date | undefined>(undefined);
+  const [showPostTimePicker, setShowPostTimePicker] = useState(false);
   const [rememberMood, setRememberMood] = useState(false);
   const [showPostSendModal, setShowPostSendModal] = useState(false);
   const [pendingContent, setPendingContent] = useState<string>('');
@@ -431,12 +432,25 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={{ color: timeColor, marginBottom: 6 }}>结束时间（可选）</Text>
-                <TimePicker
-                  value={postEndTime || new Date()}
-                  onChange={(e, d) => {
-                    if (d) setPostEndTime(d);
-                  }}
-                />
+                <TouchableOpacity onPress={() => setShowPostTimePicker(true)}>
+                  <View style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 12, backgroundColor: isDark ? '#374151' : '#f3f4f6', borderWidth: 1, borderColor }}>
+                    <Text style={{ color: textColor }}>{postEndTime ? format(postEndTime, 'HH:mm') : '选择结束时间'}</Text>
+                  </View>
+                </TouchableOpacity>
+                {showPostTimePicker && (
+                  <View style={{ marginTop: 8 }}>
+                    <TimePicker
+                      value={postEndTime || new Date()}
+                      onChange={(e: any, d?: Date) => {
+                        if (Platform.OS === 'android') {
+                          // Android: dismiss after selection
+                          setShowPostTimePicker(false);
+                        }
+                        if (d) setPostEndTime(d);
+                      }}
+                    />
+                  </View>
+                )}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 }}>
                   <Switch value={rememberMood} onValueChange={setRememberMood} />
                   <Text style={{ color: textColor }}>记住心情</Text>

@@ -206,14 +206,14 @@ export default function SettingsScreen() {
               </View>
               <TouchableOpacity 
                 style={styles.actionButton}
-                onPress={exportDataToFile}
+                onPress={async () => { await exportDataToFile(); Alert.alert('导出备份', '已生成并打开分享面板'); }}
               >
                 <Ionicons name="download-outline" size={20} color="white" />
                 <Text style={styles.actionButtonText}>导出备份</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.actionButton, { backgroundColor: '#3b82f6' }]}
-                onPress={exportMarkdownToFile}
+                onPress={async () => { await exportMarkdownToFile(); Alert.alert('导出 Markdown', '已生成并打开分享面板'); }}
               >
                 <Ionicons name="document-text-outline" size={20} color="white" />
                 <Text style={styles.actionButtonText}>导出 Markdown</Text>
@@ -227,18 +227,14 @@ export default function SettingsScreen() {
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.actionButton, { backgroundColor: '#8b5cf6' }]}
-                onPress={() => {
-                  exportAchievementsToFile(filteredAchievements);
-                }}
+                onPress={async () => { await exportAchievementsToFile(filteredAchievements); Alert.alert('导出成就', '已生成并打开分享面板'); }}
               >
                 <Ionicons name="trophy-outline" size={20} color="white" />
                 <Text style={styles.actionButtonText}>导出成就</Text>
               </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.actionButton, { backgroundColor: '#6366f1' }]}
-                onPress={() => {
-                  exportAchievementsMarkdownToFile(filteredAchievements);
-                }}
+                onPress={async () => { await exportAchievementsMarkdownToFile(filteredAchievements); Alert.alert('导出成就（MD）', '已生成并打开分享面板'); }}
               >
                 <Ionicons name="document-text-outline" size={20} color="white" />
                 <Text style={styles.actionButtonText}>导出成就（MD）</Text>

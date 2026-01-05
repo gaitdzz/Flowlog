@@ -67,11 +67,11 @@ export default function DailyReviewScreen() {
     
     saveReview(today, content);
     if (isCompleted) {
-      Alert.alert('Congratulations!', 'You have completed your daily review.', [
-        { text: 'OK', onPress: () => router.back() }
+      Alert.alert('已完成', '今日复盘已达成（500字）。', [
+        { text: '返回', onPress: () => router.back() }
       ]);
     } else {
-      Alert.alert('Saved', 'Your draft has been saved. Keep writing to reach 500 words!');
+      Alert.alert('已保存', '草稿已保存，继续输入以达到 500 字。');
     }
   };
 
@@ -84,45 +84,58 @@ export default function DailyReviewScreen() {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={textColor} />
-            <Text style={[styles.backText, { color: textColor }]}>Back</Text>
+            <Text style={[styles.backText, { color: textColor }]}>返回</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: textColor }]}>
-            {isReadOnly ? 'Review Details' : 'Daily Review'}
+            {isReadOnly ? '复盘详情' : '今日复盘'}
           </Text>
           <View style={{ width: 60 }} /> {/* Spacer */}
         </View>
 
         <View style={styles.dateContainer}>
           <Text style={[styles.dateText, { color: mutedColor }]}>
-            {format(new Date(today), 'EEEE, MMMM d, yyyy')}
+            {format(new Date(today), 'yyyy年M月d日')}
           </Text>
           {!isReadOnly && (
             <Text style={[styles.questionText, { color: textColor }]}>
-                How was your day?
+                今天过得怎么样？
             </Text>
           )}
         </View>
 
         {/* Editor */}
         <View style={styles.editorContainer}>
-          <TextInput
-            style={[
-                styles.editor, 
-                { 
-                    color: textColor, 
-                    backgroundColor: inputBg, 
-                    borderColor: borderColor,
-                    opacity: canEdit ? 1 : 0.8 
-                }
-            ]}
-            value={content}
-            onChangeText={setContent}
-            placeholder={canEdit ? "Reflect on your day, your wins, and what you learned..." : "No review content for this day."}
-            placeholderTextColor={mutedColor}
-            multiline
-            textAlignVertical="top"
-            editable={canEdit}
-          />
+          {canEdit ? (
+            <TextInput
+              style={[
+                  styles.editor, 
+                  { 
+                      color: textColor, 
+                      backgroundColor: inputBg, 
+                      borderColor: borderColor,
+                      opacity: 1 
+                  }
+              ]}
+              value={content}
+              onChangeText={setContent}
+              placeholder={"写下今天的收获、反思与计划…"}
+              placeholderTextColor={mutedColor}
+              multiline
+              textAlignVertical="top"
+              scrollEnabled
+              editable
+            />
+          ) : (
+            <View style={[styles.editor, { backgroundColor: inputBg, borderColor: borderColor }]}>
+              <View style={{ flex: 1 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: textColor, lineHeight: 22 }}>
+                    {content || '该日暂无复盘内容'}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Footer / Progress */}
@@ -134,10 +147,10 @@ export default function DailyReviewScreen() {
               <View style={styles.footer}>
                 <View style={styles.progressInfo}>
                   <Text style={{ color: isCompleted ? emerald500 : mutedColor, fontWeight: 'bold' }}>
-                    {wordCount} / {MIN_WORD_COUNT} words
+                    {wordCount} / {MIN_WORD_COUNT} 字
                   </Text>
                   <Text style={{ color: isCompleted ? emerald500 : coolGray400, fontSize: 12 }}>
-                    {isCompleted ? 'Goal Reached!' : `${MIN_WORD_COUNT - wordCount} words to go`}
+                    {isCompleted ? '目标达成！' : `还差 ${MIN_WORD_COUNT - wordCount} 字`}
                   </Text>
                 </View>
                 
@@ -162,7 +175,7 @@ export default function DailyReviewScreen() {
                   ]}
                 >
                   <Text style={styles.saveButtonText}>
-                    {isCompleted ? 'COMPLETE & SAVE' : 'SAVE DRAFT'}
+                    {isCompleted ? '完成并保存' : '保存草稿'}
                   </Text>
                 </TouchableOpacity>
               </View>
