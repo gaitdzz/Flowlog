@@ -11,6 +11,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Check EXPO_TOKEN
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "ERROR: Missing EXPO_TOKEN secret. Please add EXPO_TOKEN in GitHub → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
       - run: npm ci
       - run: npx eas-cli build -p android --profile preview --non-interactive
         env:
