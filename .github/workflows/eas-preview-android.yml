@@ -17,7 +17,19 @@ jobs:
             echo "ERROR: Missing EXPO_TOKEN secret. Please add EXPO_TOKEN in GitHub → Settings → Secrets and variables → Actions."
             exit 1
           fi
+      - name: Setup Expo/EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Verify Expo account
+        run: |
+          eas --version
+          eas whoami
+      - name: Show project config
+        run: |
+          node -e "console.log(require('./app.json'))"
+          cat eas.json
       - run: npm ci
-      - run: npx eas-cli build -p android --profile preview --non-interactive
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: EAS Android Preview Build
+        run: eas build -p android --profile preview --non-interactive
